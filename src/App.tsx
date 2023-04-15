@@ -26,23 +26,22 @@ const Node = ({
       </div>
 
       <div style={{ marginLeft: 20 }}>
-        {children &&
-          Object.keys(children).map((child) => (
-            <Node
-              key={child}
-              children={children[child]}
-              removeChild={(...coordinates: number[]) =>
-                (child: number) =>
-                  removeChild(value, ...coordinates)(child)}
-              duplicateNode={(...coordinates: number[]) =>
-                (child: number) =>
-                  duplicateNode(value, ...coordinates)(child)}
-              value={parseInt(child)}
-              addChild={(...coordinates: number[]) =>
-                addChild(value, ...coordinates)
-              }
-            />
-          ))}
+        {Object.keys(children).map((child) => (
+          <Node
+            key={child}
+            children={children[child]}
+            removeChild={(...coordinates: number[]) =>
+              (child: number) =>
+                removeChild(value, ...coordinates)(child)}
+            duplicateNode={(...coordinates: number[]) =>
+              (child: number) =>
+                duplicateNode(value, ...coordinates)(child)}
+            value={parseInt(child)}
+            addChild={(...coordinates: number[]) =>
+              addChild(value, ...coordinates)
+            }
+          />
+        ))}
       </div>
     </div>
   );
@@ -51,20 +50,18 @@ const Node = ({
 function App() {
   const [tree, setTree] = useState({ 1: {} });
 
-  console.log({ tree });
-
   const removeChild =
     (...coordinates: number[]) =>
     (childToRemove: number) => {
       const preexistingChildren = get(tree, coordinates.join("."));
 
-      const temporaryMutatedObject = set(
+      const treeWithChildRemoved = set(
         structuredClone(tree),
         coordinates.join("."),
         omit(preexistingChildren, childToRemove)
       );
 
-      setTree(temporaryMutatedObject);
+      setTree(treeWithChildRemoved);
     };
 
   const addChild = (...coordinates: number[]) => {
@@ -77,7 +74,7 @@ function App() {
             ...Object.keys(preexistingChildren).map((truc) => parseInt(truc))
           ) + 1;
 
-    const temporaryMutatedObject = set(
+    const treeWithChildAdded = set(
       structuredClone(tree),
       coordinates.join("."),
       {
@@ -86,35 +83,35 @@ function App() {
       }
     );
 
-    setTree(temporaryMutatedObject);
+    setTree(treeWithChildAdded);
   };
 
   const duplicateNode =
     (...coordinates: number[]) =>
     (nodeToDuplicate: number) => {
-      const nodeToDuplicateParent = get(tree, coordinates.join("."));
+      const nodeToDuplicateSiblings = get(tree, coordinates.join("."));
 
-      const preexistingNodeToDuplicateChildren = get(
+      const nodeToDuplicateChildren = get(
         tree,
         [...coordinates, nodeToDuplicate].join(".")
       );
 
-      const numberOfDuplicatedNode =
-        Object.keys(nodeToDuplicateParent).length === 0
+      const newDuplicatedNodeValue =
+        Object.keys(nodeToDuplicateSiblings).length === 0
           ? 1
           : Math.max(
-              ...Object.keys(nodeToDuplicateParent).map((truc) =>
+              ...Object.keys(nodeToDuplicateSiblings).map((truc) =>
                 parseInt(truc)
               )
             ) + 1;
 
-      const temporaryMutatedObject = set(
+      const treeWithNodeDuplicated = set(
         structuredClone(tree),
-        [...coordinates, numberOfDuplicatedNode].join("."),
-        preexistingNodeToDuplicateChildren
+        [...coordinates, newDuplicatedNodeValue].join("."),
+        nodeToDuplicateChildren
       );
 
-      setTree(temporaryMutatedObject);
+      setTree(treeWithNodeDuplicated);
     };
 
   return (
