@@ -10,11 +10,9 @@ const Node = ({
 }: {
   children: any;
   value: number;
-  addChild: (...coordinates: number[]) => void;
-  removeChild: (...coordinates: number[]) => (child: number) => void;
-  duplicateNode: (
-    ...coordinates: number[]
-  ) => (nodeToDuplicate: number) => void;
+  addChild: (...path: number[]) => void;
+  removeChild: (...path: number[]) => (child: number) => void;
+  duplicateNode: (...path: number[]) => (nodeToDuplicate: number) => void;
 }) => {
   return (
     <div>
@@ -30,16 +28,14 @@ const Node = ({
           <Node
             key={child}
             children={children[child]}
-            removeChild={(...coordinates: number[]) =>
+            removeChild={(...path: number[]) =>
               (child: number) =>
-                removeChild(value, ...coordinates)(child)}
-            duplicateNode={(...coordinates: number[]) =>
+                removeChild(value, ...path)(child)}
+            duplicateNode={(...path: number[]) =>
               (child: number) =>
-                duplicateNode(value, ...coordinates)(child)}
+                duplicateNode(value, ...path)(child)}
             value={parseInt(child)}
-            addChild={(...coordinates: number[]) =>
-              addChild(value, ...coordinates)
-            }
+            addChild={(...path: number[]) => addChild(value, ...path)}
           />
         ))}
       </div>
@@ -51,21 +47,21 @@ function App() {
   const [tree, setTree] = useState({ 1: {} });
 
   const removeChild =
-    (...coordinates: number[]) =>
+    (...path: number[]) =>
     (childToRemove: number) => {
-      const preexistingChildren = get(tree, coordinates.join("."));
+      const preexistingChildren = get(tree, path.join("."));
 
       const treeWithChildRemoved = set(
         structuredClone(tree),
-        coordinates.join("."),
+        path.join("."),
         omit(preexistingChildren, childToRemove)
       );
 
       setTree(treeWithChildRemoved);
     };
 
-  const addChild = (...coordinates: number[]) => {
-    const preexistingChildren = get(tree, coordinates.join("."));
+  const addChild = (...path: number[]) => {
+    const preexistingChildren = get(tree, path.join("."));
 
     const childToAdd =
       Object.keys(preexistingChildren).length === 0
@@ -74,26 +70,22 @@ function App() {
             ...Object.keys(preexistingChildren).map((truc) => parseInt(truc))
           ) + 1;
 
-    const treeWithChildAdded = set(
-      structuredClone(tree),
-      coordinates.join("."),
-      {
-        ...preexistingChildren,
-        [childToAdd]: {},
-      }
-    );
+    const treeWithChildAdded = set(structuredClone(tree), path.join("."), {
+      ...preexistingChildren,
+      [childToAdd]: {},
+    });
 
     setTree(treeWithChildAdded);
   };
 
   const duplicateNode =
-    (...coordinates: number[]) =>
+    (...path: number[]) =>
     (nodeToDuplicate: number) => {
-      const nodeToDuplicateSiblings = get(tree, coordinates.join("."));
+      const nodeToDuplicateSiblings = get(tree, path.join("."));
 
       const nodeToDuplicateChildren = get(
         tree,
-        [...coordinates, nodeToDuplicate].join(".")
+        [...path, nodeToDuplicate].join(".")
       );
 
       const newDuplicatedNodeValue =
@@ -107,7 +99,7 @@ function App() {
 
       const treeWithNodeDuplicated = set(
         structuredClone(tree),
-        [...coordinates, newDuplicatedNodeValue].join("."),
+        [...path, newDuplicatedNodeValue].join("."),
         nodeToDuplicateChildren
       );
 
