@@ -46,42 +46,45 @@ const Node = ({
 function App() {
   const [tree, setTree] = useState({ 1: {} });
 
-  const removeChild =
-    (...path: number[]) =>
-    (childToRemove: number) => {
-      const preexistingChildren = get(tree, path.join("."));
+  const getNodeChildren = (...path: number[]) => get(tree, path.join("."));
 
+  const setNodeChildren =
+    (...path: number[]) =>
+    (newChildren: {}) => {
       const treeWithChildRemoved = set(
         structuredClone(tree),
         path.join("."),
-        omit(preexistingChildren, childToRemove)
+        newChildren
       );
 
       setTree(treeWithChildRemoved);
     };
 
+  const removeChild =
+    (...path: number[]) =>
+    (childToRemove: number) => {
+      const preexistingChildren = getNodeChildren(...path);
+
+      setNodeChildren(...path)(omit(preexistingChildren, childToRemove));
+    };
+
   const addChild = (...path: number[]) => {
-    const preexistingChildren = get(tree, path.join("."));
+    const preexistingChildren = getNodeChildren(...path);
 
     const childToAdd =
       Object.keys(preexistingChildren).length === 0
         ? 1
         : Math.max(
-            ...Object.keys(preexistingChildren).map((truc) => parseInt(truc))
+            ...Object.keys(preexistingChildren).map((child) => parseInt(child))
           ) + 1;
 
-    const treeWithChildAdded = set(structuredClone(tree), path.join("."), {
-      ...preexistingChildren,
-      [childToAdd]: {},
-    });
-
-    setTree(treeWithChildAdded);
+    setNodeChildren(...path)({ ...preexistingChildren, [childToAdd]: {} });
   };
 
   const duplicateNode =
     (...path: number[]) =>
     (nodeToDuplicate: number) => {
-      const nodeToDuplicateSiblings = get(tree, path.join("."));
+      const nodeToDuplicateSiblings = getNodeChildren(...path);
 
       const nodeToDuplicateChildren = get(
         tree,
@@ -97,13 +100,7 @@ function App() {
               )
             ) + 1;
 
-      const treeWithNodeDuplicated = set(
-        structuredClone(tree),
-        [...path, newDuplicatedNodeValue].join("."),
-        nodeToDuplicateChildren
-      );
-
-      setTree(treeWithNodeDuplicated);
+      setNodeChildren(...path, newDuplicatedNodeValue)(nodeToDuplicateChildren);
     };
 
   return (
